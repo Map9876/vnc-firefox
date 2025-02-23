@@ -1,0 +1,67 @@
+name: Firefox VNC Server
+
+on:
+  workflow_dispatch:
+  
+jobs:
+  setup-vnc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Firefox and VNC
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            firefox \
+            tightvncserver \
+            x11-xserver-utils \
+            xvfb
+
+      - name: Configure VNC
+        run: |
+          mkdir -p ~/.vnc
+          echo "password" | vncpasswd -f > ~/.vnc/passwd
+          chmod 600 ~/.vnc/passwd
+          
+          # 创建简化的xstartup文件，只启动Firefox
+          cat > ~/.vnc/xstartup << 'EOF'
+          #!/bin/bash
+          xrdb $HOME/.Xresources
+          firefox --no-remote &
+          EOF
+          chmod +x ~/.vnc/xstartup
+
+      - name: Start VNC Server
+        run: |
+          vncserver :1 -geometry 1280x800 -depth 24
+          echo "VNC server started on port 5901"
+
+      - name: Install Cloudflared
+        run: |
+          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared-linux-amd64.deb
+
+      - name: Start Cloudflared for VNC
+        run: |
+          # 直接转发VNC端口5901
+          cloudflared tunnel --url tcp://localhost:5901 &
+          sleep 5
+          
+          # 获取并显示隧道URL
+          echo "等待Cloudflared隧道URL..."
+          sleep 10
+          ps aux | grep cloudflared
+
+      - name: Keep Alive and Monitor
+        run: |
+          echo "=== VNC Server Information ==="
+          echo "VNC端口: 5901"
+          echo "VNC密码: password"
+          echo "说明: 使用VNC客户端连接时，主机地址使用上面cloudflared生成的域名"
+          echo "端口使用: 复制cloudflared URL后的端口号"
+          
+          while true; do
+            echo "=== Status Update $(date) ==="
+            ps aux | grep vnc
+            ps aux | grep firefox
+            sleep 300
+          done
