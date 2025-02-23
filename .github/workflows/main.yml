@@ -1,0 +1,73 @@
+name: VNC Server with noVNC and Cloudflared
+
+on:
+  workflow_dispatch:  # Manual trigger
+  
+jobs:
+  setup-vnc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install VNC and Desktop Environment
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            xfce4 \
+            xfce4-goodies \
+            tightvncserver \
+            novnc \
+            python3 \
+            python3-pip \
+            git
+
+      - name: Configure VNC
+        run: |
+          mkdir -p ~/.vnc
+          echo "password" | vncpasswd -f > ~/.vnc/passwd
+          chmod 600 ~/.vnc/passwd
+          echo '#!/bin/bash
+          xrdb $HOME/.Xresources
+          startxfce4 &' > ~/.vnc/xstartup
+          chmod +x ~/.vnc/xstartup
+
+      - name: Start VNC Server
+        run: |
+          vncserver :1 -geometry 1280x800 -depth 24
+          sleep 5  # Wait for VNC server to start properly
+
+      - name: Install and Setup noVNC
+        run: |
+          git clone https://github.com/novnc/noVNC.git
+          cd noVNC
+          ./utils/novnc_proxy --vnc localhost:5901 &
+          sleep 5  # Wait for noVNC to start
+
+      - name: Install Cloudflared
+        run: |
+          # Download and install Cloudflared
+          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared-linux-amd64.deb
+
+      - name: Start Cloudflared
+        run: |
+          # Start Cloudflared tunnel without authentication
+          cloudflared tunnel --url http://localhost:6080 &
+          sleep 5  # Wait for tunnel to establish
+          
+          # Print the tunnel URL
+          echo "Cloudflared tunnel is running. Check the logs above for the tunnel URL."
+
+      - name: Keep Alive and Monitor
+        run: |
+          echo "VNC Server started with:"
+          echo "noVNC port: 6080"
+          echo "VNC port: 5901"
+          echo "Default VNC password: password"
+          
+          # Keep the action running and monitor services
+          while true; do
+            echo "=== Status Update $(date) ==="
+            ps aux | grep vnc
+            ps aux | grep cloudflared
+            ps aux | grep novnc
+            sleep 300
+          done
