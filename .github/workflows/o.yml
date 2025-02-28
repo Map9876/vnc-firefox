@@ -55,7 +55,7 @@ jobs:
       # 6. 启动Cloudflared隧道（TCP模式）
       - name: Start Cloudflared tunnel (TCP mode)
         run: |
-          cloudflared tunnel --url tcp://localhost:5901 > cloudflared.log 2>&1 &
+          cloudflared tunnel --url tcp://localhost:5901 
           sleep 5  # 等待Cloudflared启动
           echo "Cloudflared tunnel started. Check the log for the public URL."
           sleep 3000
