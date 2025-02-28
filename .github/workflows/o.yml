@@ -35,6 +35,7 @@ jobs:
          echo "原来的xstartup↑"
          
          echo "#!/bin/sh" > ~/.vnc/xstartup
+         echo "tigervncserver -xstartup /usr/bin/xterm"  > ~/.vnc/xstartup
          echo "firefox &" >> ~/.vnc/xstartup
          chmod +x ~/.vnc/xstartup
     
