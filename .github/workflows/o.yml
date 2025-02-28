@@ -21,7 +21,7 @@ jobs:
       - name: Configure VNC
         run: |
           mkdir -p ~/.vnc
-          echo "DISPLAY=:1 firefox &" > ~/.vnc/xstartup
+          echo "DISPLAY=:1 firefox" > ~/.vnc/xstartup
           chmod +x ~/.vnc/xstartup
       # 4. 设置VNC密码
       - name: Set VNC password
