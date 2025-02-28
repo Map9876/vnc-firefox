@@ -1,0 +1,53 @@
+name: VNC with Firefox and Cloudflared
+
+on: [push]
+
+jobs:
+  setup-vnc:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 检出代码
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. 安装依赖
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tigervnc-standalone-server firefox xterm
+
+      # 3. 配置VNC
+      - name: Configure VNC
+        run: |
+          mkdir -p ~/.vnc
+          echo "DISPLAY=:1 firefox &" > ~/.vnc/xstartup
+          chmod +x ~/.vnc/xstartup
+      # 4. 设置VNC密码
+      - name: Set VNC password
+        run: |
+          echo -e "123456\123456" | vncpasswd
+          
+      # 4. 启动VNC服务器
+      - name: Start VNC server
+        run: |
+          vncserver :1 -geometry 1280x1024 -depth 24
+
+      # 5. 安装Cloudflared
+      - name: Install Cloudflared
+        run: |
+          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared-linux-amd64.deb
+
+      # 6. 启动Cloudflared隧道（TCP模式）
+      - name: Start Cloudflared tunnel (TCP mode)
+        run: |
+          cloudflared tunnel --url tcp://localhost:5901 > cloudflared.log 2>&1 &
+          sleep 5  # 等待Cloudflared启动
+          echo "Cloudflared tunnel started. Check the log for the public URL."
+          sleep 3000
+
+      # 7. 输出Cloudflared日志
+      - name: Output Cloudflared log
+        run: |
+          cat cloudflared.log
