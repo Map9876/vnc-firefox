@@ -26,7 +26,9 @@ jobs:
       # 4. 设置VNC密码
       - name: Set VNC password
         run: |
-          echo -e "123456\123456" | vncpasswd
+          echo "password" | vncpasswd -f > ~/.vnc/passwd
+          chmod 600 ~/.vnc/passwd
+
           
       # 4. 启动VNC服务器
       - name: Start VNC server
