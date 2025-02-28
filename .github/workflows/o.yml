@@ -28,6 +28,16 @@ jobs:
         run: |
           echo "password" | vncpasswd -f > ~/.vnc/passwd
           chmod 600 ~/.vnc/passwd
+      - name: Configure VNC
+        run: |
+         echo "原来的xstartup↓"
+         cat ~/.vnc/xstartup
+         echo "原来的xstartup↑"
+         
+         echo "#!/bin/sh" > ~/.vnc/xstartup
+         echo "firefox &" >> ~/.vnc/xstartup
+         chmod +x ~/.vnc/xstartup
+    
 
           
       # 4. 启动VNC服务器
