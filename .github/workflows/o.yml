@@ -22,7 +22,7 @@ jobs:
         run: |
           mkdir -p ~/.vnc
           echo "#!/bin/sh" > ~/.vnc/xstartup
-          echo "xterm &" >> ~/.vnc/xstartup  # 启动xterm
+          echo "tigervncserver -xstartup /usr/bin/xterm" >> ~/.vnc/xstartup  # 启动xterm
           echo "firefox &" >> ~/.vnc/xstartup  # 启动firefox
           chmod +x ~/.vnc/xstartup
 
